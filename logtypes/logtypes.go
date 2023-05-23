@@ -1,4 +1,3 @@
-// sky-common/logtypes/logtypes.go
 package logtypes
 
 type LogEntry struct {
