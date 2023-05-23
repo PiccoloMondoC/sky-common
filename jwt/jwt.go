@@ -1,4 +1,3 @@
-// sky-common/jwt/jwt.go
 package jwt
 
 import (
