@@ -1,3 +1,21 @@
+// sky-common/secrets/secrets.go
+/*
+   Secrets, also called secret keys, are crucial components in this application.
+   During development, we will store and fetch secrets from environment variables.
+   In production, we need to use a secret management service such as GCP Secret
+   Manager.
+
+   The secrets package makes fetching secrets an abstract operation, independent
+   of whether the secretscome from environment variables or Secret Manager. This
+   allows us to  easily switch from using environment variables during local
+   development to using Secret Manager in the production environment.
+
+   Implementation: Secrets is implemented as a shared library that can be used by
+   any microservice that needs it. Implementation involves 3 steps: Develop a
+   Secret Fetching Interface; Implement the Interface for Both Methods (fetching
+   secrets from environment variables, and fetching secrets from Secret manager);
+   Decide on the Method at Runtime.
+*/
 package secrets
 
 import (
@@ -59,11 +77,23 @@ func (f *GcpSecretManagerFetcher) GetSecret(secretID string) (string, error) {
 }
 
 func GetFetcher() SecretFetcher {
-	// Decide on the method based on a configuration setting or an environment variable.
-	// For example, we can use an environment variable "USE_SECRET_MANAGER"
 	useSecretManager := os.Getenv("USE_SECRET_MANAGER")
 	if useSecretManager == "true" {
-		return &GcpSecretManagerFetcher{}
+		projectID := os.Getenv("GCP_PROJECT_ID")
+		credentialsFile := os.Getenv("GCP_CREDENTIALS_FILE")
+		fetcher, err := NewGcpSecretManagerFetcher(projectID, credentialsFile)
+		if err != nil {
+			// handle error
+		}
+		return fetcher
 	}
 	return &EnvVarSecretFetcher{}
 }
+
+/*
+    To fetch the secrets in the application, we can use the code below:
+
+	secretFetcher := secrets.GetFetcher()
+	apiKey, err := secretFetcher.GetSecret("API_KEY") // eg. to a secret named "API_KEY"
+
+*/
